@@ -10,32 +10,56 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
+import FilterDrawer from '../Navigation/FilterDrawer';
+import { DrawerActions, useNavigation } from '@react-navigation/native'; // Fix for navigation
 
 const images = [
-  require('../assets/Images/Frame1.png'),
-  require('../assets/Images/Frame2.png'),
-  require('../assets/Images/Frame3.png'),
-  require('../assets/Images/Frame4.png'),
+  { src: require('../assets/Images/Frame1.png'), category: 'Clothing' },
+  { src: require('../assets/Images/Frame2.png'), category: 'Accessories' },
+  { src: require('../assets/Images/Frame3.png'), category: 'Shoes' },
+  { src: require('../assets/Images/Frame4.png'), category: 'Collection' },
 ];
 
-const clothingData = [
-  { category: 'Jacket', items: 'Tiltform >' },
-  { category: 'Skirts', items: 'Adjusts >' },
-  { category: 'Dresses', items: 'Sisters >' },
-  { category: 'Records', items: 'Sisters >' },
-  { category: 'Aons', items: 'Sisters >' },
-  { category: 'T-Shirts', items: 'Titters >' }, // Corrected to T-Shirts
-  { category: 'Pants', items: 'Titters >' },   // Corrected to Pants
-];
+const categoryData = {
+  Clothing: [
+    { category: 'Jacket', items: 'Tiltform >' },
+    { category: 'Skirts', items: 'Adjusts >' },
+    { category: 'Dresses', items: 'Sisters >' },
+    { category: 'T-Shirts', items: 'Titters >' },
+    { category: 'Pants', items: 'Titters >' },
+  ],
+  Accessories: [
+    { category: 'Bags', items: 'Carrymore >' },
+    { category: 'Hats', items: 'Crown Up >' },
+    { category: 'Belts', items: 'Wraps >' },
+  ],
+  Shoes: [
+    { category: 'Sneakers', items: 'Runwell >' },
+    { category: 'Boots', items: 'TrekPro >' },
+    { category: 'Heels', items: 'StepUp >' },
+  ],
+  Collection: [
+    { category: 'Spring', items: 'Blossom >' },
+    { category: 'Summer', items: 'Shine >' },
+    { category: 'Autumn', items: 'Falling >' },
+    { category: 'Winter', items: 'Snowy >' },
+  ],
+};
 
-const SearchScreen = () => {
-  const [showClothingData, setShowClothingData] = useState(false);
+const SearchScreen = ({ isVisible, onClose }) => {
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [showFilter, setShowFilter] = useState(false);
+  const navigation = useNavigation(); // Fix for navigation
+
+  // if (!isVisible) return null;
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Ionicons name="menu" size={24} color="black" />
+        <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
+          <Ionicons name="menu" size={30} />
+        </TouchableOpacity>
         <Text style={styles.title}>Discover</Text>
         <Ionicons name="notifications-outline" size={24} color="black" />
       </View>
@@ -46,43 +70,54 @@ const SearchScreen = () => {
           <Feather name="search" size={18} color="#888" style={{ marginRight: 8 }} />
           <TextInput placeholder="Search" style={{ flex: 1 }} />
         </View>
-        <TouchableOpacity style={styles.filterIcon}>
+        <TouchableOpacity
+          style={styles.filterIcon}
+          onPress={() => setShowFilter(true)}
+        >
           <Feather name="sliders" size={20} color="#555" />
         </TouchableOpacity>
       </View>
 
-      {/* Image List */}
+      {/* Scrollable Content */}
       <ScrollView contentContainerStyle={styles.imageList}>
         {images.map((img, index) => (
-          <TouchableOpacity 
-            key={index} 
-            activeOpacity={0.8}
-            onPress={index === 0 ? () => setShowClothingData(true) : null}
-          >
-            <Image source={img} style={styles.imageCard} resizeMode="cover" />
-            {showClothingData && (
-          <View style={styles.clothingContainer}>
-            <Text style={styles.clothingHeader}>CLOTHING</Text>
-            {clothingData.map((item, index) => (
-              <View key={index} style={styles.clothingItem}>
-                <Text style={styles.categoryText}>{item.category}</Text>
-                <Text style={styles.itemsText}>{item.items}</Text>
-              </View>
-            ))}
-            <TouchableOpacity 
-              style={styles.closeButton} 
-              onPress={() => setShowClothingData(false)}
+          <View key={index}>
+            {/* Category Image */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() =>
+                setActiveCategory(
+                  activeCategory === img.category ? null : img.category
+                )
+              }
             >
-              <Text style={styles.closeButtonText}>Close</Text>
+              <Image source={img.src} style={styles.imageCard} resizeMode="cover" />
             </TouchableOpacity>
-          </View>
-        )}
-          </TouchableOpacity>
-        ))}
 
-        {/* Clothing Data Display */}
-       
+            {/* Show Data below selected image */}
+            {activeCategory === img.category && (
+              <View style={styles.clothingContainer}>
+                <Text style={styles.clothingHeader}>{img.category}</Text>
+                {categoryData[img.category].map((item, subIndex) => (
+                  <View key={subIndex} style={styles.clothingItem}>
+                    <Text style={styles.categoryText}>{item.category}</Text>
+                    <Text style={styles.itemsText}>{item.items}</Text>
+                  </View>
+                ))}
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setActiveCategory(null)}
+                >
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        ))}
       </ScrollView>
+
+      {/* Filter Drawer */}
+      <FilterDrawer visible={showFilter} onClose={() => setShowFilter(false)} />
     </View>
   );
 };
@@ -140,7 +175,7 @@ const styles = StyleSheet.create({
     width: '100%',
     borderRadius: 12,
     padding: 20,
-    marginTop: 20,
+    marginBottom: 20,
   },
   clothingHeader: {
     fontSize: 24,

@@ -4,7 +4,7 @@ import {
   Text,
   View,
   Image,
-  ScrollView,
+  Animated,
   TouchableOpacity,
   FlatList,
   Dimensions,
@@ -15,7 +15,7 @@ import { useNavigation, DrawerActions } from '@react-navigation/native';
 const { width } = Dimensions.get('window');
 
 const images = [
-  { image: require('../assets/Images/image1.png') },
+  { image: require('../assets/Images/image1.png') }, 
   { image: require('../assets/Images/image2.png') },
   { image: require('../assets/Images/image3.png') },
   { image: require('../assets/Images/image4.png') },
@@ -42,6 +42,7 @@ const HomeScreen = () => {
   const navigation = useNavigation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,18 +55,37 @@ const HomeScreen = () => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const listener = scrollY.addListener(({ value }) => {
+      if (value > 50) {
+        navigation.getParent()?.setOptions({ tabBarStyle: { display: 'none' } });
+      } else {
+        navigation.getParent()?.setOptions({ tabBarStyle: { display: 'flex' } });
+      }
+    });
+
+    return () => scrollY.removeListener(listener);
+  }, []);
+
   return (
     <View style={styles.container}>
-      <ScrollView>
-
+      <Animated.ScrollView
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
         {/* Header */}
         <View style={styles.topBar}>
           <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
             <Icon name="menu" size={30} />
-          </TouchableOpacity>
+          </TouchableOpacity >
           <Text style={styles.logo}>GemStore</Text>
           <View>
-            <Icon name="notifications-outline" size={24} />
+            <TouchableOpacity onPress={() => navigation.navigate('Notification')}>
+              <Icon name="notifications-outline" size={24} />
+            </TouchableOpacity>
             <View style={styles.notificationDot} />
           </View>
         </View>
@@ -146,7 +166,7 @@ const HomeScreen = () => {
         <View style={{ bottom: 35 }}>
           <FlatList
             horizontal
-            data={images.slice(2, 11)}
+            data={images.slice(2, 21)}
             keyExtractor={(_, index) => `rec-${index}`}
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.recommendCard}>
@@ -167,7 +187,7 @@ const HomeScreen = () => {
         <View style={{ top: 35 }}>
           <FlatList
             horizontal
-            data={images.slice(2, 11)}
+            data={images.slice(2, 21)}
             keyExtractor={(_, index) => `top-${index}`}
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.topCard}>
@@ -179,7 +199,7 @@ const HomeScreen = () => {
         </View>
 
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 };
